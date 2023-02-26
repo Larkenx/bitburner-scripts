@@ -6,7 +6,8 @@ export async function main(ns) {
 		let allServs = await utils.fetchAllServers(ns)
 		let hackable = (await utils.filterHackableServers(ns, allServs)).map((s) => s.hostname)
 		for (let s of hackable) {
-			await utils.runScript(ns, 'hgw-controller.js', 1, s, 0)
+			// await utils.runScript(ns, 'hgw-controller.js', 1, s, 0)
+			ns.exec('hgw-controller.js', 'home', 1, s, 0)
 		}
 		await ns.sleep(100)
 		await ns.sleep(1000 * 60 * 2) // every 2 minutes, check for more hackable ones because of hack lvl

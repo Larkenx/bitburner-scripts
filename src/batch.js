@@ -21,16 +21,23 @@ import * as utils from './utils.js'
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
 async function prepareForBatching(ns, serv) {
-	while (ns.getServerMaxMoney(serv) !== ns.getServerMoneyAvailable(serv)) {
-		let hackTime = ns.getHackTime(serv)
-		while (ns.getServerSecurityLevel(serv) >= ns.getServerMinSecurityLevel(serv)) {
-			let weakenTime = ns.getWeakenTime(serv)
-		}
-	}
+	await utils.weaken(ns, serv)
+	await utils.grow(ns, serv)
+	await utils.weaken(ns, serv)
 }
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
 export async function main(ns) {
 	ns.disableLog('ALL')
 	let target = ns.args[0]
+	if (!target) {
+		throw new Error('Must specify a target in script params')
+	}
+	await prepareForBatching(ns, target)
+	ns.tprint(`${target} prepared for batching; at max money & min sec.`)
+	let batchId = 0
+	while (true) {
+		ns.exec('hgw-batch-controller.js', 'home', 1, target, batchId++)
+		await ns.asleep(200)
+	}
 }

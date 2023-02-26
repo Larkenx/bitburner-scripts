@@ -28,6 +28,6 @@ export async function main(ns) {
 		ns.print('─'.repeat(width + 20))
 		ns.print(` ${ns.nFormat(moneyEarnedSinceStartPerSecond, '$00,00')}/sec`)
 		ns.print(' ')
-		await ns.sleep(15000)
+		await ns.sleep(1000)
 	}
 }

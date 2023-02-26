@@ -3,10 +3,11 @@ import * as utils from 'utils.js'
 /** @param {import("../NetscriptDefinitions").NS} ns */
 export async function main(ns) {
 	ns.disableLog('ALL')
+	let tickRate = ns.args[0] || 1000
 	let history = {
 		ram: [],
 	}
-	let width = 80
+	let width = 160
 	const maxRam = await utils.getMaxGlobalRam(ns)
 	while (true) {
 		let ramUsage = await utils.getUsedGlobalRam(ns)
@@ -29,6 +30,6 @@ export async function main(ns) {
 				'00,00'
 			)}gb`
 		)
-		await ns.sleep(1000)
+		await ns.sleep(tickRate)
 	}
 }

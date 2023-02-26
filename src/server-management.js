@@ -37,6 +37,7 @@ export async function main(ns) {
 	}
 
 	async function continuousUpgrades() {
+		await purchaseMaxServers(1)
 		let allServersPurchased = ns.getPurchasedServers()
 		while (true) {
 			allServersPurchased = allServersPurchased.sort((a, b) => ns.getServerMaxRam(a) - ns.getServerMaxRam(b))
@@ -59,21 +60,6 @@ export async function main(ns) {
 		for (let serv of allServersPurchased) {
 			let cost = ns.getPurchasedServerUpgradeCost(serv, maxRam)
 			ns.tprint(`Cost of upgrading ${serv} to ${maxRam}gb of maxRam: ${ns.nFormat(cost, '$0,0')}`)
-		}
-	}
-
-	async function buyServ() {
-		let maxOwnedServers = ns.getPurchasedServerLimit()
-		ns.tprint(`Purchasing new servers with ${ram}gb. Can purchase up to ${maxOwnedServers}`)
-		while (ns.getPurchasedServers().length < maxOwnedServers) {
-			for (let i = 0; i < maxOwnedServers; i++) {
-				if (!ns.serverExists(getServerName(i))) {
-					if (canAffordServer(ram)) {
-						ns.tprint(`Buying ${getServerName(i)} serv with ${ram}gb`)
-						ns.purchaseServer(getServerName(i), ram)
-					}
-				}
-			}
 		}
 	}
 
