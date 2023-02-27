@@ -11,7 +11,7 @@ export async function main(ns) {
 			let growthRatio = Math.ceil(maxMoney / money)
 			let growThreads = Math.ceil(ns.growthAnalyze(serv.hostname, growthRatio))
 			if (growThreads > 0) {
-				await utils.runScript(ns, 'grow.js', growThreads, serv.hostname)
+				await utils.runScript(ns, 'grow.js', growThreads, { target: serv.hostname })
 				await ns.asleep(growTime)
 			}
 		})

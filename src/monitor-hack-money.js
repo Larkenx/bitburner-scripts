@@ -3,7 +3,6 @@ import * as utils from 'utils.js'
 export async function main(ns) {
 	ns.disableLog('ALL')
 	let portNumber = 1
-	ns.clearPort(portNumber)
 	while (true) {
 		while (ns.peek(1) !== 'NULL PORT DATA') {
 			let { hostname, target, moneyStolen } = JSON.parse(ns.readPort(portNumber))
@@ -16,8 +15,13 @@ export async function main(ns) {
 				padding
 			)
 			let fpercentMaxCash = ns.nFormat(moneyAvailable / ns.getServerMaxMoney(target), '0.0%').padStart(padding / 2)
-			ns.print(`│${fhostname}  │${fmoneyStolen}  │${ftarget}  │${fremainingCash}  │${fpercentMaxCash}  │`)
-			ns.print('┴──────────────────────────────────────────────────────────────────────────────────────────────┴')
+			let fsecurityLevel = `${ns.getServerSecurityLevel(target).toFixed(2)} / ${ns.getServerMinSecurityLevel(target)}`.padStart(
+				padding
+			)
+			ns.print(`│${fhostname}  │${fmoneyStolen}  │${ftarget}  │${fremainingCash}  │${fpercentMaxCash}  │ ${fsecurityLevel}|`)
+			ns.print(
+				'─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────'
+			)
 		}
 		await ns.sleep(5000)
 	}

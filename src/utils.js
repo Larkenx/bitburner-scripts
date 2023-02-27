@@ -75,10 +75,14 @@ export async function getTopTargets(ns) {
 }
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
-export async function filterHackableServers(ns, servers) {
+export async function filterHackableServers(ns, servers, hackingLevelDivisor = 2) {
 	let sortedServers = servers
 		.filter((servInfo) => {
-			return servInfo.rootAccess && servInfo.maxMoney > 0 && servInfo.hackingLevelRequired <= Math.ceil(ns.getHackingLevel() / 2)
+			return (
+				servInfo.rootAccess &&
+				servInfo.maxMoney > 0 &&
+				servInfo.hackingLevelRequired <= Math.ceil(ns.getHackingLevel() / hackingLevelDivisor)
+			)
 		})
 		.sort((a, b) => b.hackingLevelRequired - a.hackingLevelRequired)
 
@@ -86,11 +90,10 @@ export async function filterHackableServers(ns, servers) {
 }
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
-export async function runScript(ns, scriptName, threads, target, pid = 0) {
+export async function runScript(ns, scriptName, threads, scriptArgs) {
 	if (threads <= 0) {
 		throw new Error('Cannot run script with zero or less threads')
 	}
-	const MIN_HOME_RAM_PCT = 0.4
 	let ramPerThread = ns.getScriptRam(scriptName)
 
 	let pservs = (await fetchAllServers(ns))
@@ -119,9 +122,9 @@ export async function runScript(ns, scriptName, threads, target, pid = 0) {
 		ns.scp('utils.js', serv)
 		ns.scp(scriptName, serv)
 
-		ns.print(`Starting script ${scriptName} on ${serv} with ${possibleThreads} threads`)
+		ns.print(`Starting script ${scriptName} on ${serv} with ${possibleThreads} threads, ${scriptArgs}`)
 
-		ns.exec(scriptName, serv, possibleThreads, target, pid)
+		ns.exec(scriptName, serv, possibleThreads, JSON.stringify(scriptArgs))
 
 		// Did we already run *all* the threads of this script?
 		threadsStarted += possibleThreads
@@ -162,7 +165,7 @@ export async function getHackInfo(ns, serv, hackPercentage) {
 export async function grow(ns, serv, id) {
 	let { growThreads, growTime } = await getGrowthInfo(ns, serv)
 	if (growThreads > 0) {
-		await runScript(ns, 'grow.js', growThreads, serv, id)
+		await runScript(ns, 'grow.js', growThreads, { target: serv, id })
 		await ns.asleep(growTime)
 	}
 }
@@ -171,7 +174,7 @@ export async function grow(ns, serv, id) {
 export async function hack(ns, serv, hackPercentage, id) {
 	let { hackThreads, hackTime } = await getHackInfo(ns, serv, hackPercentage)
 	if (hackThreads > 0) {
-		await runScript(ns, 'hack.js', hackThreads, serv, id)
+		await runScript(ns, 'hack.js', hackThreads, { target: serv, id })
 		await ns.asleep(hackTime)
 	}
 }
@@ -180,7 +183,7 @@ export async function hack(ns, serv, hackPercentage, id) {
 export async function weaken(ns, serv, id) {
 	let { weakenThreads, weakenTime } = await getWeakenInfo(ns, serv)
 	if (weakenThreads > 0) {
-		await runScript(ns, 'weaken.js', weakenThreads, serv, id)
+		await runScript(ns, 'weaken.js', weakenThreads, { target: serv, id })
 		await ns.asleep(weakenTime)
 	}
 }

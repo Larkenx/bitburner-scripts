@@ -7,7 +7,7 @@ export async function main(ns) {
 	let history = {
 		ram: [],
 	}
-	let width = 160
+	let width = 80
 	const maxRam = await utils.getMaxGlobalRam(ns)
 	while (true) {
 		let ramUsage = await utils.getUsedGlobalRam(ns)

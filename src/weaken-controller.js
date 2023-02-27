@@ -10,7 +10,7 @@ export async function main(ns) {
 			const sec = ns.getServerSecurityLevel(serv.hostname)
 			let weakenThreads = Math.ceil((sec - minSec) / ns.weakenAnalyze(1))
 			if (weakenThreads > 0) {
-				await utils.runScript(ns, 'weaken.js', weakenThreads, serv.hostname, ...ns.args)
+				await utils.runScript(ns, 'weaken.js', weakenThreads, { target: serv.hostname })
 				await ns.asleep(weakenTime)
 			}
 		})

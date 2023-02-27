@@ -4,9 +4,8 @@ export async function main(ns) {
 	while (true) {
 		ns.tprint('Spinning up hgw controllers for any newly hackable servers')
 		let allServs = await utils.fetchAllServers(ns)
-		let hackable = (await utils.filterHackableServers(ns, allServs)).map((s) => s.hostname)
+		let hackable = (await utils.filterHackableServers(ns, allServs, 1)).map((s) => s.hostname)
 		for (let s of hackable) {
-			// await utils.runScript(ns, 'hgw-controller.js', 1, s, 0)
 			ns.exec('hgw-controller.js', 'home', 1, s, 0)
 		}
 		await ns.sleep(100)

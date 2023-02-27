@@ -21,7 +21,7 @@ export async function main(ns) {
 
 		// Hack thread calculation:
 		let money = ns.getServerMoneyAvailable(target)
-		let hackPercentage = 0.5
+		let hackPercentage = 0.8
 		if (money <= 0) money = 1 // division by zero safety
 		let hackThreads = Math.ceil(ns.hackAnalyzeThreads(target, money * hackPercentage))
 
@@ -29,25 +29,17 @@ export async function main(ns) {
 		let maxMoney = ns.getServerMaxMoney(target)
 		let growThreads = Math.ceil(ns.growthAnalyze(target, maxMoney / money))
 
-		ns.print(
-			`${target} :: ${sec} security lvl, ${minSec} min security lvl, ${ns.nFormat(money, '$00,00')} money, ${ns.nFormat(
-				maxMoney,
-				'$00,00'
-			)} max cash`
-		)
-		// ns.print(`${target} :: ${growThreads} grow threads, ${hackThreads} hack threads ${weakenThreads} weakenThreads`)
-
 		if (ns.getServerSecurityLevel(target) > securityThresh) {
 			// If the server's security level is above our threshold, weaken it
-			await runScript(ns, 'weaken.js', weakenThreads, target, pid)
+			await runScript(ns, 'weaken.js', weakenThreads, { target, pid })
 			await ns.sleep(weakenTime)
 		} else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
 			// If the server's money is less than our threshold, grow it
-			await runScript(ns, 'grow.js', growThreads, target, pid)
+			await runScript(ns, 'grow.js', growThreads, { target, pid })
 			await ns.sleep(growTime)
 		} else {
 			// Otherwise, hack it
-			await runScript(ns, 'hack.js', hackThreads, target, pid)
+			await runScript(ns, 'hack.js', hackThreads, { target, pid })
 			await ns.sleep(hackTime)
 		}
 	}

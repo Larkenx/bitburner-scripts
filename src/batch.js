@@ -35,9 +35,9 @@ export async function main(ns) {
 	}
 	await prepareForBatching(ns, target)
 	ns.tprint(`${target} prepared for batching; at max money & min sec.`)
-	let batchId = 0
-	while (true) {
-		ns.exec('hgw-batch-controller.js', 'home', 1, target, batchId++)
-		await ns.asleep(200)
+
+	let batchCount = 10
+	for (let batchId = 0; batchId < batchCount; batchId++) {
+		ns.exec('execute-batch.js', 'home', 1, target, batchId)
 	}
 }
