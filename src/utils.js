@@ -65,13 +65,22 @@ export async function getServerInformation(ns, hostname) {
 	}
 	return stats
 }
+/** @param {import("../NetscriptDefinitions").NS} ns */
 
 export async function fetchAllServers(ns) {
 	return dfs(ns, getServerInformation, ns.args[1])
 }
+/** @param {import("../NetscriptDefinitions").NS} ns */
 
 export async function getTopTargets(ns) {
-	return await filterHackableServers(ns, await fetchAllServers(ns))
+	let servs = await filterHackableServers(ns, await fetchAllServers(ns))
+	servs.map((s) => {
+		ns.tprint(
+			`${s.hostname} | hack: ${~~ns.getHackTime(s.hostname)} | grow: ${~~ns.getGrowTime(s.hostname)}| weaken: ${~~ns.getWeakenTime(
+				s.hostname
+			)}`
+		)
+	})
 }
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
@@ -165,7 +174,7 @@ export async function getHackInfo(ns, serv, hackPercentage) {
 export async function grow(ns, serv, id) {
 	let { growThreads, growTime } = await getGrowthInfo(ns, serv)
 	if (growThreads > 0) {
-		await runScript(ns, 'grow.js', growThreads, { target: serv, id })
+		runScript(ns, 'grow.js', growThreads, { target: serv, id })
 		await ns.asleep(growTime)
 	}
 }
@@ -174,7 +183,7 @@ export async function grow(ns, serv, id) {
 export async function hack(ns, serv, hackPercentage, id) {
 	let { hackThreads, hackTime } = await getHackInfo(ns, serv, hackPercentage)
 	if (hackThreads > 0) {
-		await runScript(ns, 'hack.js', hackThreads, { target: serv, id })
+		runScript(ns, 'hack.js', hackThreads, { target: serv, id })
 		await ns.asleep(hackTime)
 	}
 }
@@ -183,7 +192,7 @@ export async function hack(ns, serv, hackPercentage, id) {
 export async function weaken(ns, serv, id) {
 	let { weakenThreads, weakenTime } = await getWeakenInfo(ns, serv)
 	if (weakenThreads > 0) {
-		await runScript(ns, 'weaken.js', weakenThreads, { target: serv, id })
+		runScript(ns, 'weaken.js', weakenThreads, { target: serv, id })
 		await ns.asleep(weakenTime)
 	}
 }

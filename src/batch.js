@@ -1,4 +1,7 @@
-import * as utils from './utils.js'
+import { grow, weaken } from './utils.js'
+import * as growUtils from './utils-grow.js'
+
+let SCRIPT_DELAY_MS = 20
 
 // -Find all servers (+ filter out the ones without ram)
 // -Make a server purchasing script
@@ -21,9 +24,51 @@ import * as utils from './utils.js'
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
 async function prepareForBatching(ns, serv) {
-	await utils.weaken(ns, serv)
-	await utils.grow(ns, serv)
-	await utils.weaken(ns, serv)
+	await grow(ns, serv)
+	await weaken(ns, serv)
+}
+
+// Easy mode delay calculations for batching
+// let hackDelay= weakenTime - spacer - hackTime;
+// let weaken1delay= 0;
+// let growDelay= weakenTime + spacer - growTime;
+// let weaken2delay= spacer * 2;
+
+/** @param {import("../NetscriptDefinitions").NS} ns */
+async function executeBatch(ns, target, batchId) {
+	let weakenTime = ns.getWeakenTime(target)
+	let hackTime = ns.getHackTime(target)
+	let growTime = ns.getGrowTime(target)
+
+	let hackPercent = 0.05
+
+	while (true) {
+		let hackThreads = Math.ceil(hackPercent / ns.hackAnalyze(target))
+		let weakenThreadsForHack = Math.ceil(ns.hackAnalyzeSecurity(hackThreads) / ns.weakenAnalyze(1))
+
+		let serverObject = ns.getServer(target)
+		serverObject.moneyAvailable = serverObject.moneyMax * (1 - hackPercent * 2)
+		let growThreads = growUtils.calculateGrowThreads(ns, serverObject, ns.getPlayer(), 1)
+		let weakenThreadsForGrow = Math.ceil(ns.growthAnalyzeSecurity(growThreads) / ns.weakenAnalyze(1))
+
+		// hack a % of the money
+		let hackDelay = weakenTime - hackTime - SCRIPT_DELAY_MS
+		ns.exec('hack.js', 'home', hackThreads, JSON.stringify({ target, delay: hackDelay, id: batchId }))
+
+		// weaken to counter a hack
+		ns.exec('weaken.js', 'home', weakenThreadsForHack, JSON.stringify({ target, id: batchId }))
+
+		// grow to recover hack
+		let growthDelay = weakenTime - growTime + SCRIPT_DELAY_MS
+		ns.exec('grow.js', 'home', growThreads, JSON.stringify({ target, delay: growthDelay, id: batchId }))
+
+		// weaken to min level after grow
+		let weakenDelayForGrow = SCRIPT_DELAY_MS * 2
+		ns.exec('weaken.js', 'home', weakenThreadsForGrow, JSON.stringify({ target, delay: weakenDelayForGrow, id: batchId }))
+
+		// wait for all the above scripts to finish execution
+		await ns.asleep(weakenTime + SCRIPT_DELAY_MS * 3)
+	}
 }
 
 /** @param {import("../NetscriptDefinitions").NS} ns */
@@ -34,10 +79,10 @@ export async function main(ns) {
 		throw new Error('Must specify a target in script params')
 	}
 	await prepareForBatching(ns, target)
-	ns.tprint(`${target} prepared for batching; at max money & min sec.`)
-
-	let batchCount = 10
-	for (let batchId = 0; batchId < batchCount; batchId++) {
+	let batchCount = Math.floor(ns.getWeakenTime(target) / SCRIPT_DELAY_MS - 10)
+	ns.tprint(`${target} prepared for batching; at max money & min sec. creating ${batchCount} batches`)
+	for (let batchId = 1; batchId < batchCount; batchId++) {
 		ns.exec('execute-batch.js', 'home', 1, target, batchId)
+		await ns.asleep(SCRIPT_DELAY_MS)
 	}
 }

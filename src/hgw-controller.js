@@ -1,9 +1,8 @@
 import { runScript } from './utils.js'
 /** @param {import("../NetscriptDefinitions").NS} ns */
 export async function main(ns) {
-	const pid = ns.args[1]
 	ns.disableLog('ALL')
-	const target = ns.args[0]
+	const { target, pid } = JSON.parse(ns.args[0])
 	const moneyThresh = ns.getServerMaxMoney(target) * 0.9
 	const securityThresh = ns.getServerMinSecurityLevel(target) + 5
 

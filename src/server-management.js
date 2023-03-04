@@ -8,14 +8,6 @@ export async function main(ns) {
 		return ns.getServerMoneyAvailable('home') > ns.getPurchasedServerCost(ram)
 	}
 
-	async function deleteAllServers() {
-		let allServersPurchased = ns.getPurchasedServers()
-		for (let serv of allServersPurchased) {
-			ns.killall(serv)
-			ns.deleteServer(serv)
-		}
-	}
-
 	async function topservs() {
 		let allServersPurchased = ns.getPurchasedServers()
 		for (let serv of allServersPurchased) {
@@ -36,6 +28,23 @@ export async function main(ns) {
 		}
 	}
 
+	async function upgradeServer(serv, ram = 0) {
+		let currentRam = ns.getServerMaxRam(serv)
+		let ramUpgrade = ram ? ram : currentRam * 2
+		let costToUpgrade = ns.getPurchasedServerUpgradeCost(serv, ramUpgrade)
+		if (ns.getServerMoneyAvailable('home') > costToUpgrade && currentRam !== ns.getPurchasedServerMaxRam()) {
+			ns.tprint(`Upgrading ${serv} to ${ramUpgrade}gb of ram for ${ns.nFormat(costToUpgrade, '$0,0')}`)
+			ns.upgradePurchasedServer(serv, ramUpgrade)
+		}
+	}
+
+	async function upgradeCost(serv, ram = 0) {
+		let currentRam = ns.getServerMaxRam(serv)
+		let ramUpgrade = ram ? ram : currentRam * 2
+		let costToUpgrade = ns.getPurchasedServerUpgradeCost(serv, ramUpgrade)
+		ns.tprint(`Cost to upgrade ${serv} to ${ramUpgrade}gb of ram is ${ns.nFormat(costToUpgrade, '$0,0')}`)
+	}
+
 	async function continuousUpgrades() {
 		await purchaseMaxServers(1)
 		let allServersPurchased = ns.getPurchasedServers()
@@ -50,16 +59,7 @@ export async function main(ns) {
 					ns.upgradePurchasedServer(serv, ramUpgrade)
 				}
 			}
-			await ns.sleep(5000)
-		}
-	}
-
-	async function listAllServerUpgradeCost(ram) {
-		let allServersPurchased = ns.getPurchasedServers()
-		let maxRam = ns.getPurchasedServerMaxRam()
-		for (let serv of allServersPurchased) {
-			let cost = ns.getPurchasedServerUpgradeCost(serv, maxRam)
-			ns.tprint(`Cost of upgrading ${serv} to ${maxRam}gb of maxRam: ${ns.nFormat(cost, '$0,0')}`)
+			await ns.sleep(500)
 		}
 	}
 
@@ -81,11 +81,11 @@ export async function main(ns) {
 
 	let CLI = {
 		purchaseMaxServers: purchaseMaxServers,
-		deleteAllServers: deleteAllServers,
 		upgradeAllServers: upgradeAllServers,
-		listAllServerUpgradeCost: listAllServerUpgradeCost,
 		topservs: topservs,
 		continuousUpgrades: continuousUpgrades,
+		upgradeServer,
+		upgradeCost,
 	}
 	let command = ns.args[0]
 	if (!command) {
